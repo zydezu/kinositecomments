@@ -54,8 +54,8 @@
       }
 
       function checkUUID() {
-        if (localStorage.ID) { //check if device has an ID stored in cookie
-          var UUID = localStorage.ID;
+        if (localStorage.deviceUUID) { //check if device has an ID stored in cookie
+          var UUID = localStorage.deviceUUID;
         } else {
           function uuidv4() {
             return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
@@ -63,7 +63,7 @@
             );
           }
           var UUID = uuidv4();
-          localStorage.ID = UUID; //store UUID on client
+          localStorage.deviceUUID = UUID; //store UUID on client
         }
         console.log(UUID);
         localStorage.lastPage = document.location.href;
@@ -90,7 +90,7 @@
 
         // Replace all URLs with `<a>` tags.
         return text.replace(urlRegex, function(match) {
-          return `<a href="${match}">${match}</a>`;
+          return `<a target="_blank" href="${match}">${match}</a>`;
         });
       }
 
@@ -104,8 +104,8 @@
         });
       }
 
-      function editComment(originalComment, ID){
-        let edit = window.prompt(originalComment, "Type your comment here...")
+      function editComment(ID){
+        let edit = window.prompt("Edit", "Edit your comment")
         editCommentConfirm(edit, ID)
       }
 
@@ -113,7 +113,7 @@
         const db = firebase.firestore(); // init database
         const commentRef = db.collection(getPage()+"page").doc(ID.toString()) // get correct page and document
         commentRef.update({
-          comment: edit + ` <span class="edited">(Edited)</span>`, // edit comment
+          comment: processData(edit) + ` <span class="edited">(Edited)</span>`, // edit comment
         })
         .then(docRef => {
           console.log("Comment edited: ", ID.toString());
@@ -127,12 +127,6 @@
     </script>
 
     <script type="module">
-      try{
-        var url = new URL(document.referrer);
-        url = url.hostname;
-      }catch(e){
-        var url = "basepage"; //default page incase of error
-      }
       const config = {
         //replace with your keys
         apiKey: "AIzaSyAux2JUqc-2vJJHccbOsDVcH7XUAG5BHaU",  
@@ -167,8 +161,8 @@
             nickname: fillednickname,
             comment: processData(comment.value),
             date: new Date(),
-            deviceID: localStorage.ID,
-            ID: commentCount()
+            deviceUUID: localStorage.deviceUUID,
+            commentID: commentCount()
         }).then(docRef => {
           console.log("Comment sent");
         }).catch(error => {
@@ -183,10 +177,16 @@
       }
     }
 
+    try{
+      var url = new URL(document.referrer);
+      url = url.hostname;
+    } catch(e){
+      var url = "basepage"; //default page incase of error
+    }
     if (url == "zydezu.github.io" || window.location.hostname == "kinositecomments.web.app"){ //replace url (hostname only) with the page you will embed this site on
       if (url != "zydezu.github.io"){
         window.history.replaceState(null, '', window.location.pathname); //redirect kinositecomments.web.app/?page=WHATEVER to base page, so non-existent pages cant be made
-        document.body.style.backgroundColor = "#000000";
+        document.body.style.backgroundColor = "#000";
       }
       db
         .collection(getPage()+"page") //group by page
@@ -214,12 +214,11 @@
             let hours = "0" + date.getHours();
             let minutes = "0" + date.getMinutes();
             let createdOn = date.toLocaleDateString() + " " + hours.substr(-2) + ':' + minutes.substr(-2); // format time and date
-            console.log(createdOn)
 
-            if (comments[i].deviceID == localStorage.ID){ //check if comment was posted by you
+            if (comments[i].deviceUUID == localStorage.deviceUUID){ //check if comment was posted by you
               dataArea.innerHTML += 
-            `<article id=${comments[i].commentID}><p><b>${comments[i].nickname}</b> <em>${createdOn}</em> | <button onclick="editComment(${comments[i].comment}, ${comments[i].commentID})">Edit</button> <button onclick="deleteComment(${comments[i].commentID})">Delete</button> <br/>${comments[i].comment}</p></article>`;
-            } else { // comments not written by you
+            `<article id=${comments[i].commentID}><p><b>${comments[i].nickname}</b> <em>${createdOn}</em> | <button onclick="editComment(${comments[i].commentID})">Edit</button> <button onclick="deleteComment(${comments[i].commentID})">Delete</button> <br/>${comments[i].comment}</p></article>`;
+            } else{ // comments not written by you
               dataArea.innerHTML += 
             `<article id=${comments[i].commentID}><p><b>${comments[i].nickname}</b> <em>${createdOn}</em><br/>${comments[i].comment} </p></article>`; 
             }
@@ -227,7 +226,7 @@
           sendHeightMessage()
       });
     }
-    else{
+    else {
       dataArea.innerHTML = "Invalid page"; // if embed is on a page its not supposed to be on
     }
     </script>
