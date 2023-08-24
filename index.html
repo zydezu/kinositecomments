@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Comments</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon"/> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <!-- update the version number as needed -->
@@ -19,8 +20,8 @@
       <div class="namebox">
           <input type="text" placeholder="Name" id="nickname" minlength=0 maxlength=16> <output id="length">0/1024</output>
       </div>
-      <div class="messagebox" oninput="checkLength()">
-        <textarea placeholder="Type your comment here..." id="message" maxlength=1024 required></textarea>
+      <div class="commentbox" oninput="checkLength()">
+        <textarea placeholder="Type your comment here..." id="comment" maxlength=1024 required></textarea>
       </div>
       <div class="send">
         <button type="submit">Send</button>
@@ -29,25 +30,24 @@
 
     <section class="comments">
       <div id="loaddata">
-        <p>Loading messages...</p>
+        <p>Loading comments...</p>
       </div>
     </section>
 
     <script>
-      var textarea = document.getElementById("message");
-      var maxMessageHeight = 500;
-
-      function sendHeightMessage() {
-        window.parent.postMessage(Math.max(250, document.body.scrollHeight + 50), "*");
-      }
-
-      window.addEventListener("resize", sendHeightMessage);
+      //adjust page height when resizing
+      var textarea = document.getElementById("comment");
+      var maxTextAreaHeight = 500;
+      window.addEventListener("resize", sendHeightMessage);       
       new ResizeObserver(sendHeightMessage).observe(textarea);
 
-      textarea.addEventListener("input", () => {
+      //adjust height of the textarea when typing in it
+      function sendHeightMessage() {window.parent.postMessage(Math.max(250, document.body.scrollHeight + 50), "*")}
+      textarea.addEventListener("input", adjustTextAreaSize);
+      function adjustTextAreaSize(){
         textarea.style.height = "";
-        textarea.style.height = Math.min(textarea.scrollHeight, maxMessageHeight) + "px";
-      });
+        textarea.style.height = Math.min(textarea.scrollHeight, maxTextAreaHeight) + "px";
+      }
 
       function getPage() {
         return (new URL(window.location.href)).searchParams.get("page");
@@ -69,8 +69,8 @@
         localStorage.lastPage = document.location.href;
       }
 
-      function checkLength() { //write character count of currently typed message
-        document.getElementById("length").value = document.getElementById("message").value.length + "/1024"
+      function checkLength() { //write character count of currently typed comment
+        document.getElementById("length").value = document.getElementById("comment").value.length + "/1024"
       }
 
       function processData(data) {
@@ -94,29 +94,36 @@
         });
       }
 
-      function deleteMessage(ID){
-        const db = firebase.firestore(); //setup database
-        const commentRef = db.collection(getPage()+"page").doc(ID.toString())
+      function deleteComment(ID){
+        const db = firebase.firestore(); // init database
+        const commentRef = db.collection(getPage()+"page").doc(ID.toString()) // get correct page and document
         commentRef.delete().then(() => {
-          console.log("Message deleted");
+          console.log("Comment deleted");
         }).catch((error) => {
-          console.error("Error removing message: ", error);
+          console.error("Error removing comment: ", error);
         });
       }
 
-      function editMessageConfirm(ID){
-        const db = firebase.firestore(); //setup database
-        const commentRef = db.collection(getPage()+"page").doc(ID.toString())
-        commentRef.delete().then(() => {
-          console.log("Message edited");
-        }).catch((error) => {
-          console.error("Error removing message: ", error);
+      function editComment(originalComment, ID){
+        let edit = window.prompt(originalComment, "Type your comment here...")
+        editCommentConfirm(edit, ID)
+      }
+
+      function editCommentConfirm(edit, ID){
+        const db = firebase.firestore(); // init database
+        const commentRef = db.collection(getPage()+"page").doc(ID.toString()) // get correct page and document
+        commentRef.update({
+          comment: edit + ` <span class="edited">(Edited)</span>`, // edit comment
+        })
+        .then(docRef => {
+          console.log("Comment edited: ", ID.toString());
+        })
+        .catch(error => {
+            console.error("Error editing comment: ", error);
         });
       }
 
-      function messageCount(){
-        return document.getElementById("commentCount").innerHTML.toString(); //get message count
-      }
+      function commentCount(){return document.getElementById("commentCount").innerHTML.toString()}
     </script>
 
     <script type="module">
@@ -136,7 +143,7 @@
       const db = firebase.firestore();
       const form = document.querySelector("form"); //store page elements
       const nickname = document.getElementById("nickname");
-      const message = document.getElementById("message");
+      const comment = document.getElementById("comment");
       const dataArea = document.getElementById("loaddata");
 
       form.addEventListener('keydown', (event) => {
@@ -151,27 +158,27 @@
     });
 
     function submitForm() {
-      if (message.value) { //client check message conditions
+      if (comment.value) { //client check comment conditions
         let fillednickname = "anon" // if nickname box is left blank name them 'anon'
         if (nickname.value) fillednickname = nickname.value
 
-        const commentRef = db.collection(getPage()+"page").doc(messageCount())
+        const commentRef = db.collection(getPage()+"page").doc(commentCount())
         commentRef.set({
             nickname: fillednickname,
-            message: processData(message.value),
+            comment: processData(comment.value),
             date: new Date(),
             deviceID: localStorage.ID,
-            messageID: messageCount()
+            ID: commentCount()
         }).then(docRef => {
-          console.log("Message sent");
+          console.log("Comment sent");
         }).catch(error => {
-          console.error("Error adding message: ", error);
+          console.error("Error adding comment: ", error);
         });
-        message.value = "";
+        comment.value = "";
         checkLength()
       }
       else{
-        message.value = "";
+        comment.value = "";
         checkLength()
       }
     }
@@ -185,33 +192,36 @@
         .collection(getPage()+"page") //group by page
         .orderBy("date")
         .onSnapshot(querySnapshot => {
-          let messages = [];
+          let comments = [];
           querySnapshot.forEach(chat => {
-            messages.push(chat.data());
+            comments.push(chat.data());
           });
 
-          if (messages.length !== 0) { //check message count and update
+          if (comments.length !== 0) { //check comment count and update
             dataArea.innerHTML = "";
-            document.getElementById("commentCount").innerHTML = messages.length;
+            document.getElementById("commentCount").innerHTML = comments.length;
           }
           else {
-            dataArea.innerHTML = "<p>No messages</p>"; // display no messages sign
-            document.getElementById("commentCount").innerHTML = messages.length;
+            dataArea.innerHTML = "<p>No comments</p>"; //no comments
+            document.getElementById("commentCount").innerHTML = comments.length;
           }
 
-          for (var i = messages.length-1; i > -1 ; i--) {
-            var date = new Date(messages[i].date.seconds * 1000);
-            var createdOn = date.toLocaleDateString();
-            var hours = date.getHours();
-            var minutes = "0" + date.getMinutes();
-            var createdOn = createdOn + " " + hours + ':' + minutes.substr(-2); // format time and date
-            if (messages[i].deviceID == localStorage.ID){ //check if message was posted by you
+          // loop through all the comments collected
+          for (let i = comments.length-1; i > -1 ; i--) {
+            let date = new Date(comments[i].date.seconds * 1000);
+            console.log(date)
+
+            let hours = "0" + date.getHours();
+            let minutes = "0" + date.getMinutes();
+            let createdOn = date.toLocaleDateString() + " " + hours.substr(-2) + ':' + minutes.substr(-2); // format time and date
+            console.log(createdOn)
+
+            if (comments[i].deviceID == localStorage.ID){ //check if comment was posted by you
               dataArea.innerHTML += 
-            `<article id=${messages[i].messageID}><p><b>${messages[i].nickname}</b> <em>${createdOn}</em> | <button onclick="deleteMessage(${messages[i].messageID})">Delete</button> <br/>${messages[i].message}</p></article>`;
-            }
-            else { // messages not written by you
+            `<article id=${comments[i].commentID}><p><b>${comments[i].nickname}</b> <em>${createdOn}</em> | <button onclick="editComment(${comments[i].comment}, ${comments[i].commentID})">Edit</button> <button onclick="deleteComment(${comments[i].commentID})">Delete</button> <br/>${comments[i].comment}</p></article>`;
+            } else { // comments not written by you
               dataArea.innerHTML += 
-            `<article id=${messages[i].messageID}><p><b>${messages[i].nickname}</b> <em>${createdOn}</em><br/>${messages[i].message} </p></article>`; 
+            `<article id=${comments[i].commentID}><p><b>${comments[i].nickname}</b> <em>${createdOn}</em><br/>${comments[i].comment} </p></article>`; 
             }
           }
           sendHeightMessage()

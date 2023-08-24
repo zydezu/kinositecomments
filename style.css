@@ -89,6 +89,9 @@ body {
   margin: 0px;
   margin-bottom: 10px;
 }
+.edited{
+  opacity: 0.8;
+}
 
 /*image*/
 img {
@@ -125,19 +128,12 @@ video:fullscreen {
     width: 100%;
     height: 100%;
   }
-  /*scale youtube iframes just like regular videos*/
-  .youtubeVideoWidescreen {
+  .youtubeVideoWidescreen {  /*scale youtube iframes just like regular videos*/
     aspect-ratio: 16 / 9;
     height: auto;
     width: 100%;
   }
-  .youtubeVideoRetro {
-    aspect-ratio: 4 / 3;
-    height: auto;
-    width: 100%;
-  }
 }
-
 
 /*button*/
 button {
@@ -153,7 +149,7 @@ button {
   margin-left: 1px;
 }
 .send button{
-  width: 100px;
+  width: 80px;
 }
 button:hover, button:focus{
   color: #ffeeee!important;
@@ -161,7 +157,7 @@ button:hover, button:focus{
 }
 @media screen and (max-width: 768px) {
   button {
-    padding: 2px 15px;
+    padding: 4px 15px;
   }
 }
 
@@ -174,10 +170,11 @@ textarea{
   width: 350px;
   height: 100px;
   max-width: 90%;
-  max-height: 300px;
+  max-height: 500px;
   overflow: auto;
 }
 input, textarea {
+  font-size: 15px;
   background-color: rgba(0, 0, 0, 0.6);
   border: 1px solid #ffffff;
   border-radius: 5px;
@@ -187,6 +184,10 @@ input, textarea {
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
+input:focus {
+  outline: none;
+  border: 1px solid #ffffff;
+} 
 textarea:focus:invalid {
   outline: none;
   border: 1px solid #ff6868;
@@ -198,13 +199,13 @@ textarea:valid{
 @media screen and (max-width: 768px) {
   input,textarea {
     padding: 5px;
-    font-size: 18px;
+    font-size: 20px;
   }
 }
 
 /*code*/
 code, .codeBox{
-  font-family: FMono-Regular, Consolas, DejaVu Sans Mono ,Liberation Mono, Menlo, monospace !important;
+  font-family: FMono-Regular, Consolas, DejaVu Sans Mono, Liberation Mono, Menlo, monospace !important;
 }
 code /*code formatting*/ {
   font-size: 15px;
