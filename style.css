@@ -157,7 +157,7 @@ button:hover, button:focus{
 }
 @media screen and (max-width: 768px) {
   button {
-    padding: 4px 15px;
+    padding: 2px 5px;
   }
 }
 
@@ -200,6 +200,27 @@ textarea:valid{
   input,textarea {
     padding: 5px;
     font-size: 20px;
+  }
+}
+
+/*table*/
+table {
+  border-collapse: collapse;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+td, th {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 5px;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+th {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+@media screen and (max-width: 768px) {
+  td, th {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 2px;
   }
 }
 

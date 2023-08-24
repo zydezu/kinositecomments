@@ -6,12 +6,70 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon"/> 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css"/>
+    <style>
+      .hidden{
+        display: none;
+      }
+    </style>
   </head>
   <body>
-    <p>Stored localStorage data</p>
+    <p>Clear comment section site data: <button onclick="deleteWebStorage()" type="button"><div id="clear">Clear</div></button>
+    <p id="storageInformation">There is no data stored for the comment section</p>
+    <table id="table" class="hidden">
+      <thead>
+          <tr>
+              <th>Key</th>
+              <th>Value</th>
+          </tr>
+      </thead>
+      <tbody id="tableBody">
+      </tbody>
+  </table>
   </body>
   <script>
+    function deleteWebStorage() {
+      localStorage.clear();
+      document.getElementById("clear").innerHTML = "Cleared!";
+      displayLocalStorage();
+    }
+
     // if on https://kinositecomments.web.app/settings.html and not https://zydezu.github.io/settings.html, make the background black
     if (window == window.parent) document.body.style.backgroundColor = "#000"; //iframe checker
+    
+    // Function to retrieve and display localStorage items in a table
+    function displayLocalStorage() {
+      const tableBody = document.getElementById("tableBody");
+
+      // Clear existing table rows
+      tableBody.innerHTML = "";
+
+      if (localStorage.length == 0){
+        document.getElementById("storageInformation").classList.remove("hidden")
+        document.getElementById("table").classList.add("hidden");
+        return
+      }
+      document.getElementById("storageInformation").classList.add("hidden")
+      document.getElementById("table").classList.remove("hidden");
+
+      // Loop through localStorage items
+      for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          const value = localStorage.getItem(key);
+
+          const row = document.createElement("tr");
+          const keyCell = document.createElement("td");
+          const valueCell = document.createElement("td");
+
+          keyCell.textContent = key;
+          valueCell.textContent = value;
+
+          row.appendChild(keyCell);
+          row.appendChild(valueCell);
+
+          tableBody.appendChild(row);
+      }
+    }
+
+    displayLocalStorage();
   </script>
 </html>
