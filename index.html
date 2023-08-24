@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Comments</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/9.8.1/firebase-app-compat.js"></script> <!-- import firebase SDK -->
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/9.8.1/firebase-firestore-compat.js"></script> <!-- import firebase firestore SDK -->
+    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+  </head>
+
+  <body onload="checkUUID()"> <!-- get user UUID -->
+    <div id="title"><span style="font-size: 20px;"><b>Comments</b></span> <span style="font-size: 15px;" id="commentCount">0</span></div>
+
+    <form>
+      <div class="namebox">
+          <input type="text" placeholder="Name" id="nickname" minlength=0 maxlength=16> <output id="length">0/1024</output>
+      </div>
+      <div class="messagebox" oninput="checkLength()">
+        <textarea placeholder="Type your comment here..." id="message" maxlength=1024 required></textarea>
+      </div>
+      <div class="send">
+        <button type="submit">Send</button>
+      </div>
+    </form>
+
+    <section class="comments">
+      <div id="loaddata">
+        <p>Loading messages...</p>
+      </div>
+    </section>
+
+    <script>
+      var textarea = document.getElementById("message");
+      var maxMessageHeight = 500;
+
+      function sendHeightMessage() {
+        window.parent.postMessage(Math.max(250, document.body.scrollHeight + 50), "*");
+      }
+
+      window.addEventListener("resize", sendHeightMessage);
+      new ResizeObserver(sendHeightMessage).observe(textarea);
+
+      textarea.addEventListener("input", () => {
+        textarea.style.height = "";
+        textarea.style.height = Math.min(textarea.scrollHeight, maxMessageHeight) + "px";
+      });
+
+      function getPage() {
+        return (new URL(window.location.href)).searchParams.get("page");
+      }
+
+      function checkUUID() {
+        if (localStorage.ID) { //check if device has an ID stored in cookie
+          var UUID = localStorage.ID;
+        } else {
+          function uuidv4() {
+            return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+              (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16) //generate random UUID
+            );
+          }
+          var UUID = uuidv4();
+          localStorage.ID = UUID; //store UUID on client
+        }
+        console.log(UUID);
+        localStorage.lastPage = document.location.href;
+      }
+
+      function checkLength() { //write character count of currently typed message
+        document.getElementById("length").value = document.getElementById("message").value.length + "/1024"
+      }
+
+      function processData(data) {
+        console.debug(data)
+        // strip rogue tags
+        let sanitsiedText = data.replace( /(<([^>]+)>)/ig, '');
+        if (sanitsiedText == ""){
+          throw new Error('Empty string!');
+        }
+        console.debug(sanitsiedText)
+        return toHyperlink(sanitsiedText)
+      }
+
+      function toHyperlink(text) {
+        // Create a regular expression to match URLs.
+        const urlRegex = /(https?:\/\/[-A-Za-z0-9+&@#\/%?=~_|!:,.;]*)/g;
+
+        // Replace all URLs with `<a>` tags.
+        return text.replace(urlRegex, function(match) {
+          return `<a href="${match}">${match}</a>`;
+        });
+      }
+
+      function deleteMessage(ID){
+        const db = firebase.firestore(); //setup database
+        const commentRef = db.collection(getPage()+"page").doc(ID.toString())
+        commentRef.delete().then(() => {
+          console.log("Message deleted");
+        }).catch((error) => {
+          console.error("Error removing message: ", error);
+        });
+      }
+
+      function editMessageConfirm(ID){
+        const db = firebase.firestore(); //setup database
+        const commentRef = db.collection(getPage()+"page").doc(ID.toString())
+        commentRef.delete().then(() => {
+          console.log("Message edited");
+        }).catch((error) => {
+          console.error("Error removing message: ", error);
+        });
+      }
+
+      function messageCount(){
+        return document.getElementById("commentCount").innerHTML.toString(); //get message count
+      }
+    </script>
+
+    <script type="module">
+      try{
+        var url = new URL(document.referrer);
+        url = url.hostname;
+      }catch(e){
+        var url = "basepage"; //default page incase of error
+      }
+      const config = {
+        //replace with your keys
+        apiKey: "AIzaSyAux2JUqc-2vJJHccbOsDVcH7XUAG5BHaU",  
+        projectId: "kinositecomments" 
+      };
+    
+      //init cloud firestore through firebase()
+      const db = firebase.firestore();
+      const form = document.querySelector("form"); //store page elements
+      const nickname = document.getElementById("nickname");
+      const message = document.getElementById("message");
+      const dataArea = document.getElementById("loaddata");
+
+      form.addEventListener('keydown', (event) => {
+          if(event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+              submitForm()
+          }
+      });
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      submitForm()
+    });
+
+    function submitForm() {
+      if (message.value) { //client check message conditions
+        let fillednickname = "anon" // if nickname box is left blank name them 'anon'
+        if (nickname.value) fillednickname = nickname.value
+
+        const commentRef = db.collection(getPage()+"page").doc(messageCount())
+        commentRef.set({
+            nickname: fillednickname,
+            message: processData(message.value),
+            date: new Date(),
+            deviceID: localStorage.ID,
+            messageID: messageCount()
+        }).then(docRef => {
+          console.log("Message sent");
+        }).catch(error => {
+          console.error("Error adding message: ", error);
+        });
+        message.value = "";
+        checkLength()
+      }
+      else{
+        message.value = "";
+        checkLength()
+      }
+    }
+
+    if (url == "zydezu.github.io" || window.location.hostname == "kinositecomments.web.app"){ //replace url (hostname only) with the page you will embed this site on
+      if (url != "zydezu.github.io"){
+        window.history.replaceState(null, '', window.location.pathname); //redirect kinositecomments.web.app/?page=WHATEVER to base page, so non-existent pages cant be made
+        document.body.style.backgroundColor = "#000000";
+      }
+      db
+        .collection(getPage()+"page") //group by page
+        .orderBy("date")
+        .onSnapshot(querySnapshot => {
+          let messages = [];
+          querySnapshot.forEach(chat => {
+            messages.push(chat.data());
+          });
+
+          if (messages.length !== 0) { //check message count and update
+            dataArea.innerHTML = "";
+            document.getElementById("commentCount").innerHTML = messages.length;
+          }
+          else {
+            dataArea.innerHTML = "<p>No messages</p>"; // display no messages sign
+            document.getElementById("commentCount").innerHTML = messages.length;
+          }
+
+          for (var i = messages.length-1; i > -1 ; i--) {
+            var date = new Date(messages[i].date.seconds * 1000);
+            var createdOn = date.toLocaleDateString();
+            var hours = date.getHours();
+            var minutes = "0" + date.getMinutes();
+            var createdOn = createdOn + " " + hours + ':' + minutes.substr(-2); // format time and date
+            if (messages[i].deviceID == localStorage.ID){ //check if message was posted by you
+              dataArea.innerHTML += 
+            `<article id=${messages[i].messageID}><p><b>${messages[i].nickname}</b> <em>${createdOn}</em> | <button onclick="deleteMessage(${messages[i].messageID})">Delete</button> <br/>${messages[i].message}</p></article>`;
+            }
+            else { // messages not written by you
+              dataArea.innerHTML += 
+            `<article id=${messages[i].messageID}><p><b>${messages[i].nickname}</b> <em>${createdOn}</em><br/>${messages[i].message} </p></article>`; 
+            }
+          }
+          sendHeightMessage()
+      });
+    }
+    else{
+      dataArea.innerHTML = "Invalid page"; // if embed is on a page its not supposed to be on
+    }
+    </script>
+</body>
+</html>
