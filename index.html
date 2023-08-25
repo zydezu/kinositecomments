@@ -168,11 +168,11 @@ function replyToComment(ID){
   replyCommentConfirm(reply, ID);
 }
 
-function replyCommentConfirm(name, ID){
+function replyCommentConfirm(reply, ID){
   const db = firebase.firestore(); // init database
   const commentRef = db.collection(getPage()+"page").doc(ID); // get correct page and document
 
-  let reply = window.prompt("Enter name", "").substring(0, 16);
+  let name = window.prompt("Enter name", "").substring(0, 16);
 
   commentRef.get().then((messages) => {
     if (messages.exists) {

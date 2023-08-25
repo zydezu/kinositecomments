@@ -13,7 +13,7 @@
     </style>
   </head>
   <body>
-    <p>Clear comment section site data: <button onclick="deleteWebStorage()" type="button"><div id="clear">Clear</div></button>
+    <p>Clear comment section site data <button onclick="deleteWebStorage()" type="button"><div id="clear">Clear</div></button>
     <p id="storageInformation"><code>There is no data stored for the comment section</code></p>
     <table id="table" class="hidden">
       <thead>
@@ -25,6 +25,9 @@
       <tbody id="tableBody">
       </tbody>
     </table>
+    <p>Upon first load, the comment section generates a <code>deviceUUID</code> to remember posted comments, so they can be 
+      edited or deleted in the future. <code>lastPage</code> is used for stability purposes.
+    </p>
   </body>
   <script>
     function deleteWebStorage() {
