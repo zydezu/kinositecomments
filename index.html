@@ -10,6 +10,7 @@
     <script defer src="/__/firebase/9.8.1/firebase-app-compat.js"></script> <!-- import firebase SDK -->
     <!-- include only the Firebase features as you need -->
     <script defer src="/__/firebase/9.8.1/firebase-firestore-compat.js"></script> <!-- import firebase firestore SDK -->
+    <script defer src="/__/firebase/9.8.1/firebase-auth-compat.js"></script> <!-- import firebase firestore SDK -->
     <script defer src="/__/firebase/init.js?useEmulator=true"></script>
   </head>
 
@@ -18,10 +19,10 @@
 
     <form>
       <div class="namebox">
-          <input type="text" placeholder="Name" id="nickname" minlength=0 maxlength=16> <output id="length">0/1024</output>
+          <input type="text" placeholder="Name" id="nickname" minlength=0 maxlength=16> <output id="length">0/512</output>
       </div>
       <div class="commentbox" oninput="checkLength()">
-        <textarea placeholder="Type your comment here..." id="comment" maxlength=1024 required></textarea>
+        <textarea placeholder="Type your comment here..." id="comment" maxlength=512 required></textarea>
       </div>
       <div class="send">
         <button type="submit">Send</button>
@@ -34,201 +35,318 @@
       </div>
     </section>
 
-    <script>
-      //adjust page height when resizing
-      var textarea = document.getElementById("comment");
-      var maxTextAreaHeight = 500;
-      window.addEventListener("resize", sendHeightMessage);       
-      new ResizeObserver(sendHeightMessage).observe(textarea);
+<script>
+//adjust page height when resizing
+var textarea = document.getElementById("comment");
+var maxTextAreaHeight = 500;
+window.addEventListener("resize", sendHeightMessage);       
+new ResizeObserver(sendHeightMessage).observe(textarea);
 
-      //adjust height of the textarea when typing in it
-      function sendHeightMessage() {window.parent.postMessage(Math.max(250, document.body.scrollHeight + 50), "*")}
-      textarea.addEventListener("input", adjustTextAreaSize);
-      function adjustTextAreaSize(){
-        textarea.style.height = "";
-        textarea.style.height = Math.min(textarea.scrollHeight, maxTextAreaHeight) + "px";
+//adjust height of the textarea when typing in it
+function sendHeightMessage() {window.parent.postMessage(Math.max(250, document.body.scrollHeight + 50), "*")}
+textarea.addEventListener("input", adjustTextAreaSize);
+function adjustTextAreaSize(){
+  textarea.style.height = "";
+  textarea.style.height = Math.min(textarea.scrollHeight, maxTextAreaHeight) + "px";
+}
+
+function getPage() {
+  return (new URL(window.location.href)).searchParams.get("page");
+}
+
+function checkUUID() {
+  if (localStorage.deviceUUID) { //check if device has an ID stored in cookie
+    var UUID = localStorage.deviceUUID;
+  } else {
+    var UUID = uuidv4();
+    localStorage.deviceUUID = UUID; //store UUID on client
+  }
+  console.log(UUID);
+  localStorage.lastPage = document.location.href;
+}
+
+function uuidv4() {
+  return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16) //generate random UUID
+  );
+}
+
+function checkLength() { //write character count of currently typed comment
+  document.getElementById("length").value = document.getElementById("comment").value.length + "/512";
+}
+
+function processData(data) {
+  // strip rogue tags
+  let sanitsiedText = data.replace( /(<([^>]+)>)/ig, '');
+  if (sanitsiedText == ""){
+    document.getElementById("comment").value = "";
+    throw new Error('Empty string!');
+  }
+  console.debug(sanitsiedText);
+  return toHyperlink(sanitsiedText);
+}
+
+function toHyperlink(text) {
+  const urlRegex = /(https?:\/\/[-A-Za-z0-9+&@#\/%?=~_|!:,.;]*)/g;
+  return text.replace(urlRegex, function(match) { // turn matches into a clickable link
+    return `<a target="_blank" href="${match}">${match}</a>`;
+  });
+}
+
+function deleteComment(ID){
+  const db = firebase.firestore(); // init database
+  const commentRef = db.collection(getPage()+"page").doc(ID); // get correct page and document
+  commentRef.delete().then(() => {
+    console.log("Comment deleted");
+  }).catch((error) => {
+    console.error("Error removing comment: ", error);
+  });
+}
+
+function editComment(ID){
+  let edit = window.prompt("Edit", "Edit your comment").substring(0, 512);
+  editCommentConfirm(edit, ID);
+}
+
+function editCommentConfirm(edit, ID){
+  const db = firebase.firestore(); // init database
+  const commentRef = db.collection(getPage()+"page").doc(ID); // get correct page and document
+  commentRef.update({
+    comment: processData(edit) + ` <span class="edited">(Edited)</span>`, // edit comment
+  })
+  .then(docRef => {
+    console.log("Comment edited: ", ID);
+  })
+  .catch(error => {
+      console.error("Error editing comment: ", error);
+  });
+}
+
+function editReplyComment(parentID, replyID){
+  let edit = window.prompt("Edit", "Edit your reply").substring(0, 512);
+  editReplyCommentConfirm(edit, parentID, replyID);
+}
+
+function editReplyCommentConfirm(edit, parentID, replyID){
+  const db = firebase.firestore(); // init database
+  const commentRef = db.collection(getPage()+"page").doc(parentID); // get correct page and document
+
+  commentRef.get().then((messages) => {
+    let currentReplies = messages.data().replies; //grab all the replies to the comment
+    let commentToEdit = currentReplies.find((object) => object.commentID === replyID); //find the correct reply
+
+    commentToEdit.comment = processData(edit) + ` <span class="edited">(Edited)</span>`, //edit the object's reply
+    currentReplies.splice(currentReplies.indexOf(commentToEdit), 1, commentToEdit); //splice the array with the edited reply
+
+    commentRef.update({
+      replies: currentReplies
+    }).then(commentRef => {
+      console.log("Reply edited");
+    })
+  })
+}
+
+function deleteReplyComment(parentID, replyID){
+  const db = firebase.firestore(); // init database
+  const commentRef = db.collection(getPage()+"page").doc(parentID); // get correct page and document
+
+  commentRef.get().then((messages) => {
+    let currentReplies = messages.data().replies; //grab all the replies to the comment
+    let commentToEdit = currentReplies.find((object) => object.commentID === replyID); //find the correct reply
+    currentReplies.splice(currentReplies.indexOf(commentToEdit), 1); //splice the array with the edited reply
+
+    commentRef.update({
+      replies: currentReplies
+    }).then(commentRef => {
+      console.log("Reply deleted");
+    })
+  })
+}
+
+function replyToComment(ID){
+  let reply = window.prompt("Enter your reply", "").substring(0, 512);
+  replyCommentConfirm(reply, ID);
+}
+
+function replyCommentConfirm(name, ID){
+  const db = firebase.firestore(); // init database
+  const commentRef = db.collection(getPage()+"page").doc(ID); // get correct page and document
+
+  let reply = window.prompt("Enter name", "").substring(0, 16);
+
+  commentRef.get().then((messages) => {
+    if (messages.exists) {
+      let replies = messages.data().replies;
+      let currentReplies = [];
+      if (replies != "") currentReplies = replies
+
+      let data = { // the reply data structure
+        nickname: name,
+        comment: processData(reply),
+        date: new Date(),
+        commentID: uuidv4(),
+        parentCommentID: ID,
+        deviceUUID: localStorage.deviceUUID
       }
+      currentReplies.push(data); // add this reply structure to the array of other replies
+      commentRef.update({
+        replies: currentReplies
+      }).then(commentRef => {
+        console.log("Reply sent");
+      })
+    }
+  })
+}
+</script>
 
-      function getPage() {
-        return (new URL(window.location.href)).searchParams.get("page");
-      }
+<script type="module">
+const config = { //API keys
+  apiKey: "AIzaSyAux2JUqc-2vJJHccbOsDVcH7XUAG5BHaU",  
+  projectId: "kinositecomments"
+};
 
-      function checkUUID() {
-        if (localStorage.deviceUUID) { //check if device has an ID stored in cookie
-          var UUID = localStorage.deviceUUID;
-        } else {
-          function uuidv4() {
-            return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-              (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16) //generate random UUID
-            );
-          }
-          var UUID = uuidv4();
-          localStorage.deviceUUID = UUID; //store UUID on client
-        }
-        console.log(UUID);
-        localStorage.lastPage = document.location.href;
-      }
+//init cloud firestore through firebase()
+const db = firebase.firestore();
+const form = document.querySelector("form"); //store page elements
+const nickname = document.getElementById("nickname");
+const comment = document.getElementById("comment");
+const dataArea = document.getElementById("loaddata");
+const commentCount = document.getElementById("commentCount");
 
-      function checkLength() { //write character count of currently typed comment
-        document.getElementById("length").value = document.getElementById("comment").value.length + "/1024"
-      }
+form.addEventListener('keydown', (event) => {
+  if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) submitForm();
+});
 
-      function processData(data) {
-        console.debug(data)
-        // strip rogue tags
-        let sanitsiedText = data.replace( /(<([^>]+)>)/ig, '');
-        if (sanitsiedText == ""){
-          throw new Error('Empty string!');
-        }
-        console.debug(sanitsiedText)
-        return toHyperlink(sanitsiedText)
-      }
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  submitForm();
+});
 
-      function toHyperlink(text) {
-        // Create a regular expression to match URLs.
-        const urlRegex = /(https?:\/\/[-A-Za-z0-9+&@#\/%?=~_|!:,.;]*)/g;
+function submitForm() {
+  if (comment.value) { //client check comment conditions
+    let fillednickname = "anon" // if nickname box is left blank name them 'anon'
+    if (nickname.value) fillednickname = nickname.value
 
-        // Replace all URLs with `<a>` tags.
-        return text.replace(urlRegex, function(match) {
-          return `<a target="_blank" href="${match}">${match}</a>`;
-        });
-      }
-
-      function deleteComment(ID){
-        const db = firebase.firestore(); // init database
-        const commentRef = db.collection(getPage()+"page").doc(ID.toString()) // get correct page and document
-        commentRef.delete().then(() => {
-          console.log("Comment deleted");
-        }).catch((error) => {
-          console.error("Error removing comment: ", error);
-        });
-      }
-
-      function editComment(ID){
-        let edit = window.prompt("Edit", "Edit your comment")
-        editCommentConfirm(edit, ID)
-      }
-
-      function editCommentConfirm(edit, ID){
-        const db = firebase.firestore(); // init database
-        const commentRef = db.collection(getPage()+"page").doc(ID.toString()) // get correct page and document
-        commentRef.update({
-          comment: processData(edit) + ` <span class="edited">(Edited)</span>`, // edit comment
-        })
-        .then(docRef => {
-          console.log("Comment edited: ", ID.toString());
-        })
-        .catch(error => {
-            console.error("Error editing comment: ", error);
-        });
-      }
-
-      function commentCount(){return document.getElementById("commentCount").innerHTML.toString()}
-    </script>
-
-    <script type="module">
-      const config = {
-        //replace with your keys
-        apiKey: "AIzaSyAux2JUqc-2vJJHccbOsDVcH7XUAG5BHaU",  
-        projectId: "kinositecomments" 
-      };
-    
-      //init cloud firestore through firebase()
-      const db = firebase.firestore();
-      const form = document.querySelector("form"); //store page elements
-      const nickname = document.getElementById("nickname");
-      const comment = document.getElementById("comment");
-      const dataArea = document.getElementById("loaddata");
-
-      form.addEventListener('keydown', (event) => {
-          if(event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-              submitForm()
-          }
-      });
-
-    form.addEventListener("submit", e => {
-      e.preventDefault();
-      submitForm()
+    var commentUUID = uuidv4();
+    const commentRef = db.collection(getPage()+"page").doc(commentUUID) //create new document
+    commentRef.set({
+        nickname: fillednickname,
+        comment: processData(comment.value),
+        replies: [],
+        date: new Date(),
+        commentID: commentUUID,
+        deviceUUID: localStorage.deviceUUID,
+    }).then(docRef => {
+      console.log("Comment sent");
+    }).catch(error => {
+      console.error("Error adding comment: ", error);
     });
+    comment.value = "";
+    checkLength();
+  }
+  else{
+    comment.value = "";
+    checkLength();
+  }
+}
 
-    function submitForm() {
-      if (comment.value) { //client check comment conditions
-        let fillednickname = "anon" // if nickname box is left blank name them 'anon'
-        if (nickname.value) fillednickname = nickname.value
+firebase.auth().signInAnonymously()
+  .then(() => {
+    console.log(`Signed in`);
+  })
+  .catch((error) => {
+    console.log(error);
+  });
 
-        const commentRef = db.collection(getPage()+"page").doc(commentCount())
-        commentRef.set({
-            nickname: fillednickname,
-            comment: processData(comment.value),
-            date: new Date(),
-            deviceUUID: localStorage.deviceUUID,
-            commentID: commentCount()
-        }).then(docRef => {
-          console.log("Comment sent");
-        }).catch(error => {
-          console.error("Error adding comment: ", error);
-        });
-        comment.value = "";
-        checkLength()
-      }
-      else{
-        comment.value = "";
-        checkLength()
-      }
-    }
-
-    try{
-      var url = new URL(document.referrer);
-      url = url.hostname;
-    } catch(e){
-      var url = "basepage"; //default page incase of error
-    }
-    if (url == "zydezu.github.io" || window.location.hostname == "kinositecomments.web.app"){ //replace url (hostname only) with the page you will embed this site on
-      if (url != "zydezu.github.io"){
-        window.history.replaceState(null, '', window.location.pathname); //redirect kinositecomments.web.app/?page=WHATEVER to base page, so non-existent pages cant be made
-        document.body.style.backgroundColor = "#000";
-      }
-      db
-        .collection(getPage()+"page") //group by page
-        .orderBy("date")
-        .onSnapshot(querySnapshot => {
-          let comments = [];
-          querySnapshot.forEach(chat => {
-            comments.push(chat.data());
-          });
-
-          if (comments.length !== 0) { //check comment count and update
-            dataArea.innerHTML = "";
-            document.getElementById("commentCount").innerHTML = comments.length;
-          }
-          else {
-            dataArea.innerHTML = "<p>No comments</p>"; //no comments
-            document.getElementById("commentCount").innerHTML = comments.length;
-          }
-
-          // loop through all the comments collected
-          for (let i = comments.length-1; i > -1 ; i--) {
-            let date = new Date(comments[i].date.seconds * 1000);
-            console.log(date)
-
-            let hours = "0" + date.getHours();
-            let minutes = "0" + date.getMinutes();
-            let createdOn = date.toLocaleDateString() + " " + hours.substr(-2) + ':' + minutes.substr(-2); // format time and date
-
-            if (comments[i].deviceUUID == localStorage.deviceUUID){ //check if comment was posted by you
-              dataArea.innerHTML += 
-            `<article id=${comments[i].commentID}><p><b>${comments[i].nickname}</b> <em>${createdOn}</em> | <button onclick="editComment(${comments[i].commentID})">Edit</button> <button onclick="deleteComment(${comments[i].commentID})">Delete</button> <br/>${comments[i].comment}</p></article>`;
-            } else{ // comments not written by you
-              dataArea.innerHTML += 
-            `<article id=${comments[i].commentID}><p><b>${comments[i].nickname}</b> <em>${createdOn}</em><br/>${comments[i].comment} </p></article>`; 
-            }
-          }
-          sendHeightMessage()
+try{
+  var url = new URL(document.referrer);
+  url = url.hostname;
+} catch(e){
+  var url = "basepage"; //default page incase of error
+}
+if (url == "zydezu.github.io" || window.location.hostname == "kinositecomments.web.app" || true){ //replace url (hostname only) with the page you will embed this site on
+  if (url != "zydezu.github.io"){
+    window.history.replaceState(null, '', window.location.pathname); //redirect kinositecomments.web.app/?page=WHATEVER to base page, so non-existent pages cant be made
+    document.body.style.backgroundColor = "#000";
+  }
+  db.collection(getPage()+"page") //group by page
+    .orderBy("date")
+    .onSnapshot(querySnapshot => {
+      let comments = [];
+      querySnapshot.forEach(messages => {
+        comments.push(messages.data());
       });
-    }
-    else {
-      dataArea.innerHTML = "Invalid page"; // if embed is on a page its not supposed to be on
-    }
-    </script>
+      let commentAmount = comments.length;
+      if (comments.length != 0) dataArea.innerHTML = ""; //check comment count and update
+      else dataArea.innerHTML = "<p>No comments</p>"; //no comments
+
+      function formatDate(data){
+        let date = new Date(data * 1000);
+        let hours = "0" + date.getHours();
+        let minutes = "0" + date.getMinutes();
+        return date.toLocaleDateString() + " " + hours.substr(-2) + ':' + minutes.substr(-2); // format time and date
+      }
+
+      function checkForReplies(replies){
+        if(replies != ""){
+          replies.forEach(element => {
+            commentAmount++;
+            let createdOn = formatDate(element.date.seconds);
+            if (element.deviceUUID == localStorage.deviceUUID){
+              dataArea.innerHTML += `
+              <article style="margin-left: 30px" id='${element.commentID}'>
+                <p>
+                  <b>${element.nickname}</b> <em>${createdOn}</em>
+                  <button onclick="editReplyComment('${element.parentCommentID}', '${element.commentID}')">Edit</button> 
+                  <button onclick="deleteReplyComment('${element.parentCommentID}', '${element.commentID}')">Delete</button> 
+                  <br/>${element.comment}
+                </p>
+              </article>`;
+            } else {
+              dataArea.innerHTML += `
+              <article style="margin-left: 30px" id='${element.commentID}'>
+                <p>
+                  <b>${element.nickname}</b> <em>${createdOn}</em>
+                  <br/>${element.comment}
+                </p>
+              </article>`;
+            }
+          });
+        }
+      }
+
+      // loop through all the comments collected
+      for (let i = comments.length-1; i > -1 ; i--) {
+        let createdOn = formatDate(comments[i].date.seconds);
+        if (comments[i].deviceUUID == localStorage.deviceUUID){ //check if comment was posted by you
+        dataArea.innerHTML += 
+          `<article id='${comments[i].commentID}'>
+          <p>
+            <b>${comments[i].nickname}</b> <em>${createdOn}</em>
+            <button onclick="replyToComment('${comments[i].commentID}')">Reply</button> 
+            <button onclick="editComment('${comments[i].commentID}')">Edit</button> 
+            <button onclick="deleteComment('${comments[i].commentID}')">Delete</button> 
+            <br/>${comments[i].comment}
+          </p></article>`;
+          checkForReplies(comments[i].replies);
+
+        } else { // comments not written by you
+          dataArea.innerHTML += 
+            `<article id='${comments[i].commentID}'>
+            <p>
+              <b>${comments[i].nickname}</b> <em>${createdOn}</em>
+              <button onclick="replyToComment('${comments[i].commentID}')">Reply</button> 
+              <br/>${comments[i].comment}
+            </p></article>`;
+          checkForReplies(comments[i].replies);
+        }
+      }
+      commentCount.innerHTML = commentAmount; //update comment counter
+      sendHeightMessage(); //update iframe page
+  });
+} else {
+  dataArea.innerHTML = "Invalid page"; // if embed is on a page its not supposed to be on
+}
+</script>
 </body>
 </html>
