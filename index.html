@@ -15,7 +15,7 @@
   </head>
 
   <body onload="checkUUID()"> <!-- get user UUID -->
-    <div id="title"><span style="font-size: 20px;"><b>Comments</b></span> <span style="font-size: 15px;" id="commentCount">0</span></div>
+    <div id="title"><span style="font-size: 20px"><b>Comments</b></span> <span style="font-size: 15px" id="commentCount">0</span></div>
 
     <form>
       <div class="namebox">
@@ -250,13 +250,13 @@ function submitForm() {
   }
 }
 
-firebase.auth().signInAnonymously()
-  .then(() => {
-    console.log(`Signed in`);
-  })
-  .catch((error) => {
-    console.log(error);
-  });
+// firebase.auth().signInAnonymously()
+//   .then(() => {
+//     console.log(`Signed in`);
+//   })
+//   .catch((error) => {
+//     console.log(error);
+//   });
 
 try{
   var url = new URL(document.referrer);
