@@ -173,6 +173,8 @@ function replyCommentConfirm(reply, ID){
   const commentRef = db.collection(getPage()+"page").doc(ID); // get correct page and document
 
   let name = window.prompt("Enter name", "").substring(0, 16);
+  if (!name) name = "anon" 
+
 
   commentRef.get().then((messages) => {
     if (messages.exists) {
@@ -185,7 +187,6 @@ function replyCommentConfirm(reply, ID){
         comment: processData(reply),
         date: new Date(),
         commentID: uuidv4(),
-        parentCommentID: ID,
         deviceUUID: localStorage.deviceUUID
       }
       currentReplies.push(data); // add this reply structure to the array of other replies
@@ -287,7 +288,7 @@ if (url == "zydezu.github.io" || window.location.hostname == "kinositecomments.w
         return date.toLocaleDateString() + " " + hours.substr(-2) + ':' + minutes.substr(-2); // format time and date
       }
 
-      function checkForReplies(replies){
+      function checkForReplies(replies, parentID){
         if(replies != ""){
           replies.forEach(element => {
             commentAmount++;
@@ -297,8 +298,8 @@ if (url == "zydezu.github.io" || window.location.hostname == "kinositecomments.w
               <article style="margin-left: 30px" id='${element.commentID}'>
                 <p>
                   <b>${element.nickname}</b> <em>${createdOn}</em>
-                  <button onclick="editReplyComment('${element.parentCommentID}', '${element.commentID}')">Edit</button> 
-                  <button onclick="deleteReplyComment('${element.parentCommentID}', '${element.commentID}')">Delete</button> 
+                  <button onclick="editReplyComment('${parentID}', '${element.commentID}')">Edit</button> 
+                  <button onclick="deleteReplyComment('${parentID}', '${element.commentID}')">Delete</button> 
                   <br/>${element.comment}
                 </p>
               </article>`;
@@ -328,7 +329,7 @@ if (url == "zydezu.github.io" || window.location.hostname == "kinositecomments.w
             <button onclick="deleteComment('${comments[i].commentID}')">Delete</button> 
             <br/>${comments[i].comment}
           </p></article>`;
-          checkForReplies(comments[i].replies);
+          checkForReplies(comments[i].replies, comments[i].commentID);
 
         } else { // comments not written by you
           dataArea.innerHTML += 
@@ -338,7 +339,7 @@ if (url == "zydezu.github.io" || window.location.hostname == "kinositecomments.w
               <button onclick="replyToComment('${comments[i].commentID}')">Reply</button> 
               <br/>${comments[i].comment}
             </p></article>`;
-          checkForReplies(comments[i].replies);
+          checkForReplies(comments[i].replies, comments[i].commentID);
         }
       }
       commentCount.innerHTML = commentAmount; //update comment counter
