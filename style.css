@@ -97,7 +97,7 @@ textarea {
 body {
   -webkit-tap-highlight-color: transparent;
   color: rgba(255, 255, 255, 0.8);
-  background-color: transparent;
+  background-color: none transparent;
   word-wrap: break-word;
   margin: 0px;
   font-weight: 500;
