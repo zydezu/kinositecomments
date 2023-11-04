@@ -2,51 +2,58 @@
 @font-face {
   font-family: 'MontserratStatic';
   src: url('font/Montserrat-Medium.woff2') format('woff2'),
-  url('font/Montserrat-Medium.woff') format('woff');
+    url('font/Montserrat-Medium.woff') format('woff');
   font-weight: 500;
   font-style: normal;
   font-display: swap
 }
+
 @font-face {
   font-family: 'MontserratStatic';
   src: url('font/Montserrat-MediumItalic.woff2') format('woff2'),
-  url('font/Montserrat-MediumItalic.woff') format('woff');
+    url('font/Montserrat-MediumItalic.woff') format('woff');
   font-weight: 500;
   font-style: italic;
   font-display: swap
 }
+
 @font-face {
   font-family: 'MontserratStatic';
   src: url('font/Montserrat-SemiBold.woff2') format('woff2'),
-  url('font/Montserrat-SemiBold.woff') format('woff');
+    url('font/Montserrat-SemiBold.woff') format('woff');
   font-weight: 600;
   font-style: normal;
   font-display: swap
 }
+
 @font-face {
   font-family: 'MontserratStatic';
   src: url('font/Montserrat-Bold.woff2') format('woff2'),
-  url('font/Montserrat-Bold.woff') format('woff');
+    url('font/Montserrat-Bold.woff') format('woff');
   font-weight: 700;
   font-style: normal;
   font-display: swap
 }
+
 @font-face {
   font-family: 'MontserratStatic';
   src: url('font/Montserrat-BoldItalic.woff2') format('woff2'),
-  url('font/Montserrat-BoldItalic.woff') format('woff');
+    url('font/Montserrat-BoldItalic.woff') format('woff');
   font-weight: 700;
   font-style: italic;
   font-display: swap
-  }
+}
+
 @font-face {
   font-family: 'MontserratStatic';
   src: url('font/Montserrat-ExtraBold.woff2') format('woff2'),
-  url('font/Montserrat-ExtraBold.woff') format('woff'); /*800*/
+    url('font/Montserrat-ExtraBold.woff') format('woff');
+  /*800*/
   font-weight: 800;
   font-style: normal;
   font-display: swap
 }
+
 /*variable*/
 @font-face {
   font-family: 'MontserratVariable';
@@ -56,21 +63,33 @@
   font-display: swap
 }
 
-html{
+html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
-@media screen and (orientation:landscape){
+
+@media screen and (orientation:landscape) {
   html {
     -webkit-text-size-adjust: 85%;
     text-size-adjust: 85%;
   }
 }
-body, button, input, textarea { /*apply font*/
+
+body,
+button,
+input,
+textarea {
+  /*apply font*/
   font-family: "MontserratStatic", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, Helvetica, Arial, sans-serif;
 }
+
 @supports (font-variation-settings: normal) {
-  body, button, input, textarea { /*apply font*/
+
+  body,
+  button,
+  input,
+  textarea {
+    /*apply font*/
     font-family: "MontserratVariable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, Helvetica, Arial, sans-serif;
   }
 }
@@ -83,13 +102,15 @@ body {
   margin: 0px;
   font-weight: 500;
 }
+
 #title {
   font-size: 20px;
   font-weight: 500;
   margin: 0px;
   margin-bottom: 10px;
 }
-.edited{
+
+.edited {
   opacity: 0.8;
 }
 
@@ -105,16 +126,22 @@ video {
   border-radius: 5px;
   overflow: hidden;
 }
-.iframeVideo{
+
+.iframeVideo {
   border-radius: 5px;
 }
+
 video:fullscreen {
   border-radius: 0px;
 }
-#videoBG /*background video*/ {
+
+#videoBG
+
+/*background video*/
+  {
   object-fit: cover;
   position: fixed;
-  width: 100vw; 
+  width: 100vw;
   height: 100vh;
   top: 0;
   left: 0;
@@ -123,12 +150,15 @@ video:fullscreen {
   filter: brightness(40%);
   animation: fadeIn 1s;
 }
+
 @media screen and (max-width: 768px) {
   video {
     width: 100%;
     height: 100%;
   }
-  .youtubeVideoWidescreen {  /*scale youtube iframes just like regular videos*/
+
+  .youtubeVideoWidescreen {
+    /*scale youtube iframes just like regular videos*/
     aspect-ratio: 16 / 9;
     height: auto;
     width: 100%;
@@ -142,19 +172,23 @@ button {
   border: 0;
   font-size: 15px;
   font-weight: 700;
-  color: #fa5252!important;
+  color: #fa5252 !important;
   border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   transition: color 0.08s linear;
   margin-left: 1px;
 }
-.send button{
+
+.send button {
   width: 80px;
 }
-button:hover, button:focus{
-  color: #ffeeee!important;
+
+button:hover,
+button:focus {
+  color: #ffeeee !important;
   outline: 2px solid rgba(255, 255, 255, 0.8);
 }
+
 @media screen and (max-width: 768px) {
   button {
     padding: 2px 5px;
@@ -162,18 +196,21 @@ button:hover, button:focus{
 }
 
 /*inputting*/
-input{
+input {
   width: 150px;
   max-width: 80%;
 }
-textarea{
+
+textarea {
   width: 350px;
   height: 100px;
   max-width: 90%;
   max-height: 500px;
   overflow: auto;
 }
-input, textarea {
+
+input,
+textarea {
   font-size: 15px;
   background-color: rgba(0, 0, 0, 0.6);
   border: 1px solid #ffffff;
@@ -184,20 +221,26 @@ input, textarea {
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
+
 input:focus {
   outline: none;
   border: 1px solid #ffffff;
-} 
+}
+
 textarea:focus:invalid {
   outline: none;
   border: 1px solid #ff6868;
-} 
-textarea:valid{
+}
+
+textarea:valid {
   outline: none;
   border: 1px solid #68ff70;
 }
+
 @media screen and (max-width: 768px) {
-  input,textarea {
+
+  input,
+  textarea {
     padding: 5px;
     font-size: 20px;
   }
@@ -209,26 +252,37 @@ table {
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
 }
-td, th {
+
+td,
+th {
   border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 5px;
   background-color: rgba(0, 0, 0, 0.4);
 }
+
 th {
   background-color: rgba(0, 0, 0, 0.6);
 }
+
 @media screen and (max-width: 768px) {
-  td, th {
+
+  td,
+  th {
     border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 2px;
   }
 }
 
 /*code*/
-code, .codeBox{
+code,
+.codeBox {
   font-family: FMono-Regular, Consolas, DejaVu Sans Mono, Liberation Mono, Menlo, monospace !important;
 }
-code /*code formatting*/ {
+
+code
+
+/*code formatting*/
+  {
   font-size: 15px;
   padding: 3px 5px;
   line-height: 2;
@@ -236,7 +290,11 @@ code /*code formatting*/ {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 5px;
 }
-.codeBox /*code box*/ {
+
+.codeBox
+
+/*code box*/
+  {
   font-size: 14px;
   padding: 25px;
   line-height: 1.6;
@@ -247,24 +305,30 @@ code /*code formatting*/ {
 }
 
 /*link colours*/
-a:link, summary, a:visited {
+a:link,
+summary,
+a:visited {
   color: #fa5252;
   transition: color 0.08s linear;
 }
-a:hover, summary:hover {
+
+a:hover,
+summary:hover {
   color: #ffeeee;
 }
+
 a:focus {
   border-radius: 5px;
   outline: 2px solid rgba(255, 255, 255, 0.8);
 }
+
 /*external link*/
 a[target="_blank"]::after {
   content: "";
   width: 1em;
   height: 1em;
   margin: 0 0.05em 0 0.1em;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' %3E%3Cpath d='M9 2v1h3.3L6 9.3l.7.7L13 3.7V7h1V2ZM4 4c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V7l-1 1v4c0 .6-.4 1-1 1H4c-.6 0-1-.4-1-1V6c0-.6.4-1 1-1h4l1-1Z' style='fill:%23f66'/%3E%3C/svg%3E"); 
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' %3E%3Cpath d='M9 2v1h3.3L6 9.3l.7.7L13 3.7V7h1V2ZM4 4c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V7l-1 1v4c0 .6-.4 1-1 1H4c-.6 0-1-.4-1-1V6c0-.6.4-1 1-1h4l1-1Z' style='fill:%23f66'/%3E%3C/svg%3E");
   background-size: contain;
   display: inline-block;
   vertical-align: sub;
@@ -274,14 +338,20 @@ a[target="_blank"]::after {
 ::-webkit-scrollbar {
   width: 14px;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.6);
 }
-::selection /*mouse highlight colour*/ {
+
+::selection
+
+/*mouse highlight colour*/
+  {
   background-color: rgba(255, 60, 60, 0.5)
 }
