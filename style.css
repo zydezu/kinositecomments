@@ -78,7 +78,7 @@ body, button, input, textarea { /*apply font*/
 body {
   -webkit-tap-highlight-color: transparent;
   color: rgba(255, 255, 255, 0.8);
-  background-color: #000000 transparent;
+  background-color: transparent;
   word-wrap: break-word;
   margin: 0px;
   font-weight: 500;

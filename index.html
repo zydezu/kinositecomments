@@ -175,7 +175,6 @@ function replyCommentConfirm(reply, ID){
   let name = window.prompt("Enter name", "").substring(0, 16);
   if (!name) name = "anon" 
 
-
   commentRef.get().then((messages) => {
     if (messages.exists) {
       let replies = messages.data().replies;
