@@ -95,9 +95,7 @@ textarea {
 }
 
 body {
-  -webkit-tap-highlight-color: transparent;
   color: rgba(255, 255, 255, 0.8);
-  background-color: none transparent;
   word-wrap: break-word;
   margin: 0px;
   font-weight: 500;
@@ -285,7 +283,6 @@ code
   {
   font-size: 15px;
   padding: 3px 5px;
-  line-height: 2;
   background-color: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 5px;

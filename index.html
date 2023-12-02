@@ -260,14 +260,23 @@ function submitForm() {
 
 try{
   var url = new URL(document.referrer);
-  url = url.hostname;
 } catch(e){
   var url = "basepage"; //default page incase of error
 }
-if (url == "zydezu.github.io" || window.location.hostname == "kinositecomments.web.app" || true){ //replace url (hostname only) with the page you will embed this site on
-  if (url != "zydezu.github.io"){
-    window.history.replaceState(null, '', window.location.pathname); //redirect kinositecomments.web.app/?page=WHATEVER to base page, so non-existent pages cant be made
-    document.body.style.backgroundColor = "#000";
+
+let isiFrame = window.self !== window.top
+
+if (url.hostname == "zydezu.github.io" || window.location.hostname == "kinositecomments.web.app" || window.location.hostname == "kinositecomments.firebaseapp.com"){ //replace url (hostname only) with the page you will embed this site on
+  if (url.hostname == "zydezu.github.io" && isiFrame){
+    
+  } else{
+    let temp = new URL(window.location.href)
+    if (window.location.hostname.includes("kinositecomments.firebaseapp.com") || temp.search){
+      window.location.href = "https://kinositecomments.web.app"
+    }
+    if (window.location.hostname == "kinositecomments.web.app"){
+      document.body.style.backgroundColor = "#000";
+    }
   }
   db.collection(getPage()+"page") //group by page
     .orderBy("date")

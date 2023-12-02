@@ -7,6 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css"/>
     <style>
+      *{
+        user-select: none;
+      }
+
       .hidden{
         display: none;
       }
@@ -37,7 +41,7 @@
     }
 
     // if on https://kinositecomments.web.app/settings.html and not https://zydezu.github.io/settings.html, make the background black
-    if (window == window.parent) document.body.style.backgroundColor = "#000"; //iframe checker
+    if (window.self == window.top) document.body.style.backgroundColor = "#000"; //iframe checker
     
     // Function to retrieve and display localStorage items in a table
     function displayLocalStorage() {
